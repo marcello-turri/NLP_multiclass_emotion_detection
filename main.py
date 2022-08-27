@@ -1,7 +1,9 @@
+import keras.models
 import numpy as np
 from preprocessing import Preprocessing
 from sklearn.preprocessing import LabelEncoder
 from model import Model
+
 # IMPORTING THE DATASET
 train_path = 'train.txt'
 val_path = 'val.txt'
@@ -43,8 +45,10 @@ history = model.fit(training_sequences,
                     val_sequences,
                     le.fit_transform(val_labels))
 model.plot_curves(history)
+model = keras.models.load_model("saved_model/my_model.h5")
 predictions = model.predict(testing_sequences)
 predictions = np.argmax(predictions,axis=1)
 accuracy,precision,recall,f1 = model.evaluate(le.fit_transform(test_labels),predictions,cm=True)
 print(accuracy,precision,recall,f1)
+model.save('saved_model/my_model.h5')
 

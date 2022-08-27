@@ -9,7 +9,7 @@ class Preprocessing:
     def __init__(self):
         self.vocab_size=50000
 
-    def getVocabSize(self):
+    def get_vocab_size(self):
         return self.vocab_size
 
     def get_sentences_and_label(self,path):

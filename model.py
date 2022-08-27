@@ -2,7 +2,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics._classification import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
-import numpy as np
+from tensorflow.keras.callbacks import EarlyStopping,ReduceLROnPlateau,ModelCheckpoint
 import tensorflow as tf
 from keras import regularizers
 from preprocessing import Preprocessing
@@ -10,12 +10,17 @@ import matplotlib.pyplot as plt
 
 class Model:
     def __init__(self):
-        self.input_dim = Preprocessing().getVocabSize()
+        self.input_dim = Preprocessing().get_vocab_size()
         self.output_dim = 64
         self.input_length = 20
-        self.model_ = self.buildModel()
+        self.model_ = self.build_model()
+        self.callbacks = [
+            EarlyStopping(patience=10, monitor='val_loss',restore_best_weights=True),
+            ReduceLROnPlateau(monitor='val_loss',min_lr=1e-7,patience=2,mode='min',factor=0.1),
+            ModelCheckpoint(monitor='val_loss',filepath='checkpoint',save_best_only=True)
+        ]
 
-    def buildModel(self):
+    def build_model(self):
         model_ = tf.keras.Sequential([
             tf.keras.layers.Embedding(input_dim=50000,
                                       output_dim=64,
@@ -37,12 +42,13 @@ class Model:
                       optimizer='adam',
                       metrics=['accuracy'])
 
-    def fit(self, X, y,valX,valY):
-        return self.model_.fit(X, y,epochs=15,
-                    validation_data=(valX,valY))
+    def fit(self, x, y,val_x,val_y):
+        return self.model_.fit(x, y,epochs=20,
+                               validation_data=(val_x,val_y),
+                               callbacks=[self.callbacks])
 
-    def predict(self, X):
-        predictions = self.model_.predict(X)
+    def predict(self, x):
+        predictions = self.model_.predict(x)
         return predictions
 
     def plot_curves(self,history):
@@ -75,5 +81,9 @@ class Model:
             conf_matrix = confusion_matrix(ytrue, ypred)
             disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix)
             disp.plot(cmap=plt.cm.Blues)
+            plt.show()
 
         return accuracy, precision, recall, f1
+
+    def save(self,path):
+        self.model_.save(path)
